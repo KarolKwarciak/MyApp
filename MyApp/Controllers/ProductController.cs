@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using EShopService.Models; // Dodaj to, jeœli jeszcze tego nie ma
+using EShopService.Models; 
 
 namespace EShopService.Controllers
 {
