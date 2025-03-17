@@ -1,5 +1,6 @@
 using Xunit;
 using EShop.Application;
+using EShop.Domain.Exceptions;
 
 namespace EShop.Application.Tests
 {
@@ -12,15 +13,16 @@ namespace EShop.Application.Tests
             _creditCardService = new CreditCardService();
         }
 
-        [Theory]
-        [InlineData("1234")]
-        [InlineData("123456789")]
-        [InlineData("3213123")]
-        public void ValidateCard_ReturnsFalse_WhenTooShort(string cardNumber)
+        [Fact]
+        public void ValidateCard_throwsTooShortException()
         {
-            var result = _creditCardService.ValidateCard(cardNumber);
-            Assert.False(result);
+            // Arrange
+            var validateCreditCardService = new CreditCardService();
+
+            // Act & Assert
+            Assert.Throws<CardNumberTooShortException>(() => validateCreditCardService.ValidateCard("321312312"));
         }
+        
 
         [Theory]
         [InlineData("12345678912347656765756757657")]
