@@ -1,56 +1,60 @@
-﻿using System.Text.RegularExpressions;
+﻿using EShop.Domain.Enum;
+using EShop.Domain.Exceptions;
 
-namespace EShop.Application
+namespace EShop.Application.Services
 {
-    public class CreditCardService
+    public class CardValidatorService
     {
         public bool ValidateCard(string cardNumber)
         {
-            cardNumber = cardNumber.Replace(" ", "").Replace("-", "");
-            if (!cardNumber.All(char.IsDigit))
-                return false;
+            if (string.IsNullOrWhiteSpace(cardNumber))
+                throw new CardNumberInvalidException();
 
-            int sum = 0;
-            bool alternate = false;
+            var cleanedCardNumber = cardNumber.Replace(" ", "").Replace("-", "");
 
-            for (int i = cardNumber.Length - 1; i >= 0; i--)
-            {
-                int digit = cardNumber[i] - '0';
+            if (cleanedCardNumber.Length < 13)
+                throw new CardNumberTooShortException();
 
-                if (alternate)
-                {
-                    digit *= 2;
-                    if (digit > 9)
-                        digit -= 9;
-                }
+            if (cleanedCardNumber.Length > 19)
+                throw new CardNumberTooLongException();
 
-                sum += digit;
-                alternate = !alternate;
-            }
+            if (!IsValidLuhn(cleanedCardNumber))
+                throw new CardNumberInvalidException();
 
-            return (sum % 10 == 0);
+            return true;
         }
 
         public string GetCardType(string cardNumber)
         {
-            cardNumber = cardNumber.Replace(" ", "").Replace("-", "");
+            var cleanedCardNumber = cardNumber.Replace(" ", "").Replace("-", "");
 
-            if (Regex.IsMatch(cardNumber, @"^4(\d{12}|\d{15}|\d{18})$"))
-                return "Visa";
-            else if (Regex.IsMatch(cardNumber, @"^(5[1-5]\d{14}|2(2[2-9][1-9]|2[3-9]\d{2}|[3-6]\d{3}|7([01]\d{2}|20\d))\d{10})$"))
-                return "MasterCard";
-            else if (Regex.IsMatch(cardNumber, @"^3[47]\d{13}$"))
-                return "American Express";
-            else if (Regex.IsMatch(cardNumber, @"^(6011\d{12}|65\d{14}|64[4-9]\d{13}|622(1[2-9][6-9]|[2-8]\d{2}|9([01]\d|2[0-5]))\d{10})$"))
-                return "Discover";
-            else if (Regex.IsMatch(cardNumber, @"^(352[89]|35[3-8]\d)\d{12}$"))
-                return "JCB";
-            else if (Regex.IsMatch(cardNumber, @"^3(0[0-5]|[68]\d)\d{11}$"))
-                return "Diners Club";
-            else if (Regex.IsMatch(cardNumber, @"^(50|5[6-9]|6\d)\d{10,17}$"))
-                return "Maestro";
+            if (cleanedCardNumber.StartsWith("4"))
+                return CreditCardProvider.Visa.ToString();
+            if (cleanedCardNumber.StartsWith("5"))
+                return CreditCardProvider.MasterCard.ToString();
+            if (cleanedCardNumber.StartsWith("3"))
+                return CreditCardProvider.AmericanExpress.ToString();
 
-            return "Unknown";
+            throw new CardNumberInvalidException();
+        }
+
+        private bool IsValidLuhn(string cardNumber)
+        {
+            int sum = 0;
+            bool alternate = false;
+            for (int i = cardNumber.Length - 1; i >= 0; i--)
+            {
+                int n = int.Parse(cardNumber[i].ToString());
+                if (alternate)
+                {
+                    n *= 2;
+                    if (n > 9)
+                        n -= 9;
+                }
+                sum += n;
+                alternate = !alternate;
+            }
+            return (sum % 10 == 0);
         }
     }
 }
